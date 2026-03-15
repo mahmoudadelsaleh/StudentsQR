@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>كنترول محمود عادل - نسخة الموبايل</title>
+    
+    <link rel="stylesheet" href="bootstrap.rtl.min.css">
+    <script src="xlsx.full.min.js"></script>
+    <script src="qrcode.min.js"></script>
+
+    <style>
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', system-ui, sans-serif; padding: 10px; }
+        
+        /* واجهة تحكم عصرية للموبايل */
+        .mobile-panel {
+            background: #fff;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
+        }
+
+        .btn-custom {
+            border-radius: 12px;
+            padding: 12px;
+            font-weight: bold;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        /* تنسيق البطاقات للطباعة (A4) */
+        #output {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .label-card {
+            background: white;
+            border: 1.5px solid #2c3e50;
+            border-radius: 10px;
+            padding: 10px;
+            height: 52mm; /* لضمان 10 بطاقات في ورقة A4 */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            page-break-inside: avoid;
+            box-sizing: border-box;
+        }
+
+        .st-name {
+            color: #d32f2f;
+            font-size: 14px;
+            font-weight: 800;
+            text-align: center;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 4px;
+            margin-bottom: 5px;
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+            font-size: 11px;
+        }
+
+        .data-item {
+            background: #f1f3f5;
+            padding: 3px 6px;
+            border-right: 3px solid #3498db;
+            border-radius: 4px;
+        }
+
+        .qr-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-top: 5px;
+        }
+
+        .qr-wrapper img {
+            width: 80px !important;
+            height: 80px !important;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { padding: 0; background: white; }
+            #output { gap: 5px; }
+        }
+
+        /* تحسين شكل الاختيارات للموبايل */
+        .options-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container no-print">
+    <div class="mobile-panel">
+        <h4 class="text-center text-primary mb-3">نظام بطاقات الطلاب 🎓</h4>
+        
+        <label class="form-label fw-bold">1. اختر الملف من موبايلك:</label>
+        <input type="file" id="excel-file" class="form-control" accept=".xlsx, .xls">
+
+        <label class="form-label fw-bold mt-3">2. البيانات المطلوبة:</label>
+        <div class="options-list">
+            <div class="form-check"><input type="checkbox" class="data-opt" value="مسلسل" checked> <small>مسلسل</small></div>
+            <div class="form-check"><input type="checkbox" class="data-opt" value="كود الطالب" checked> <small>كود</small></div>
+            <div class="form-check"><input type="checkbox" class="data-opt" value="الرقم القومي" checked> <small>قومي</small></div>
+            <div class="form-check"><input type="checkbox" class="data-opt" value="الصف" checked> <small>صف</small></div>
+            <div class="form-check"><input type="checkbox" class="data-opt" value="النوع" checked> <small>نوع</small></div>
+            <div class="form-check"><input type="checkbox" class="data-opt" value="الجلوس" checked> <small>جلوس</small></div>
+            <div class="form-check"><input type="checkbox" class="data-opt" value="السري" checked> <small>سري</small></div>
+        </div>
+
+        <button onclick="processData()" class="btn btn-success btn-custom shadow-sm mt-4">توليد البطاقات ✨</button>
+        <button onclick="window.print()" id="print-btn" class="btn btn-dark btn-custom shadow-sm" style="display:none;">تحميل/طباعة PDF 📄</button>
+    </div>
+</div>
+
+<div id="output"></div>
+
+<script>
+    function processData() {
+        const fileInput = document.getElementById('excel-file');
+        const output = document.getElementById('output');
+        const opts = Array.from(document.querySelectorAll('.data-opt:checked')).map(c => c.value);
+
+        if (!fileInput.files[0]) return alert("يا حج محمود، فين ملف الإكسيل؟");
+
+        const reader = new FileReader();
+        reader.readAsBinaryString(fileInput.files[0]);
+
+        reader.onload = function(e) {
+            try {
+                const workbook = XLSX.read(e.target.result, {type: 'binary'});
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(sheet, {defval: ""});
+
+                output.innerHTML = ""; 
+
+                rows.forEach((row, i) => {
+                    let cleanRow = {};
+                    for (let key in row) { cleanRow[key.toString().trim()] = row[key].toString().trim(); }
+
+                    let name = cleanRow['اسم الطالب'] || cleanRow['الاسم'] || "طالب بدون اسم";
+                    const card = document.createElement('div');
+                    card.className = 'label-card';
+                    
+                    let htmlContent = `<div><div class="st-name">${name}</div><div class="data-grid">`;
+                    let qrTxt = `الاسم: ${name}\n`;
+
+                    opts.forEach(f => {
+                        if (cleanRow[f]) {
+                            htmlContent += `<div class="data-item"><b>${f}:</b> ${cleanRow[f]}</div>`;
+                            qrTxt += `${f}: ${cleanRow[f]}\n`;
+                        }
+                    });
+
+                    htmlContent += `</div></div><div class="qr-wrapper"><div id="qr-${i}"></div></div>`;
+                    card.innerHTML = htmlContent;
+                    output.appendChild(card);
+
+                    setTimeout(() => {
+                        new QRCode(document.getElementById(`qr-${i}`), {
+                            text: qrTxt.trim(),
+                            width: 90, height: 90,
+                            correctLevel: QRCode.CorrectLevel.H
+                        });
+                    }, 50);
+                });
+                document.getElementById('print-btn').style.display = 'block';
+            } catch (err) {
+                alert("خطأ: تأكد من ملف الإكسيل ومكان المكتبات.");
+            }
+        };
+    }
+</script>
+</body>
+</html>
