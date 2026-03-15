@@ -3,117 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام محمود عادل - معالج البيانات الضخمة</title>
+    <title>نظام محمود عادل - النسخة الأونلاين</title>
     
-    <script src="xlsx.full.min.js"></script>
-    <script src="qrcode.min.js"></script>
-    <link rel="stylesheet" href="bootstrap.rtl.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
-        body { background: #f4f7f6; font-family: sans-serif; padding: 10px; }
-        .no-print { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        #output { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        body { background: #eef2f7; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding-bottom: 50px; }
+        .config-box { background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px; border: none; }
+        .btn-custom { padding: 12px; font-weight: bold; border-radius: 10px; transition: 0.3s; width: 100%; margin-top: 10px; }
+        
+        /* تنسيق الـ 10 بطاقات في ورقة A4 */
+        #output { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .label-card { 
-            background: white; border: 1px solid #000; padding: 10px; 
-            height: 52mm; display: flex; flex-direction: column; 
-            justify-content: space-between; page-break-inside: avoid; 
+            background: white; border: 1.5px solid #2c3e50; padding: 10px; height: 53mm; 
+            display: flex; flex-direction: column; justify-content: space-between; 
+            box-sizing: border-box; page-break-inside: avoid; border-radius: 8px;
         }
-        .st-name { color: #d32f2f; font-weight: bold; font-size: 13px; text-align: center; border-bottom: 1px solid #3498db; }
-        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 10px; }
-        .data-item { background: #f1f3f5; padding: 2px 5px; border-right: 3px solid #3498db; }
-        .qr-wrapper { display: flex; justify-content: center; align-items: center; }
-        canvas, img { width: 80px !important; height: 80px !important; }
-        @media print { .no-print { display: none !important; } }
+        .st-name { color: #d32f2f; font-weight: bold; font-size: 15px; text-align: center; border-bottom: 2px solid #3498db; margin-bottom: 5px; }
+        .data-rows { font-size: 11px; line-height: 1.3; flex-grow: 1; }
+        .data-item { border-bottom: 1px solid #eee; display: flex; justify-content: space-between; padding: 1px 0; }
+        .qr-wrapper { display: flex; justify-content: center; align-items: center; padding-top: 5px; }
+        canvas, img { width: 90px !important; height: 90px !important; }
+
+        @media print { .no-print { display: none !important; } body { background: white; padding: 0; } }
     </style>
 </head>
 <body>
 
-<div class="no-print">
-    <h4 class="text-center text-primary">نظام الطلاب - معالجة دفعات 🎓</h4>
-    <input type="file" id="excel-file" class="form-control mb-3" accept=".xlsx, .xls">
-    
-    <div class="row g-2 mb-3 bg-light p-2 rounded border">
-        <div class="col-4"><label><input type="checkbox" class="data-opt" value="مسلسل" checked> مسلسل</label></div>
-        <div class="col-4"><label><input type="checkbox" class="data-opt" value="كود الطالب" checked> كود</label></div>
-        <div class="col-4"><label><input type="checkbox" class="data-opt" value="الرقم القومي" checked> قومي</label></div>
-        <div class="col-4"><label><input type="checkbox" class="data-opt" value="الصف" checked> صف</label></div>
-        <div class="col-4"><label><input type="checkbox" class="data-opt" value="النوع" checked> نوع</label></div>
-        <div class="col-4"><label><input type="checkbox" class="data-opt" value="الجلوس" checked> جلوس</label></div>
-        <div class="col-4"><label><input type="checkbox" class="data-opt" value="السري" checked> سري</label></div>
-    </div>
+<div class="container no-print mt-3">
+    <div class="config-box">
+        <h3 class="text-center text-primary mb-4">🎓 كنترول محمود عادل - أونلاين</h3>
+        
+        <div class="mb-3">
+            <label class="form-label fw-bold">1. اختر ملف الإكسيل:</label>
+            <input type="file" id="excel-file" class="form-control" accept=".xlsx, .xls">
+        </div>
 
-    <button onclick="processData()" class="btn btn-success w-100 py-3 fw-bold">توليد كافة الطلاب (بدون توقف) ✨</button>
-    <button onclick="window.print()" id="print-btn" class="btn btn-dark w-100 py-3 mt-2" style="display:none;">طباعة PDF</button>
-    <div id="status" class="text-center mt-2 text-muted" style="font-size: 12px;"></div>
+        <div id="settings-area" style="display:none;">
+            <label class="form-label fw-bold text-danger">2. اختر البيانات المطلوبة:</label>
+            <div id="col-selector" class="d-flex flex-wrap gap-2 p-3 bg-light rounded border mb-3"></div>
+            
+            <div class="row g-2">
+                <div class="col-6"><button onclick="generate('cards')" class="btn btn-success btn-custom">توليد البطاقات</button></div>
+                <div class="col-6"><button onclick="generate('qrs')" class="btn btn-primary btn-custom">كيو آر فقط</button></div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div id="output"></div>
+<div id="output" class="container-fluid"></div>
+
+<div class="no-print text-center mt-4">
+    <button id="print-btn" onclick="window.print()" class="btn btn-dark btn-custom" style="display:none; width: 80%;">📄 طباعة / حفظ PDF</button>
+</div>
 
 <script>
-    async function processData() {
-        const fileInput = document.getElementById('excel-file');
-        const output = document.getElementById('output');
-        const status = document.getElementById('status');
-        const opts = Array.from(document.querySelectorAll('.data-opt:checked')).map(c => c.value);
+    let studentsData = [];
+    let headers = [];
 
-        if (!fileInput.files[0]) return alert("اختر الملف أولاً");
+    // دالة لدعم الحروف العربية
+    const encodeAr = (s) => unescape(encodeURIComponent(s || ""));
 
+    document.getElementById('excel-file').onchange = function(e) {
         const reader = new FileReader();
-        reader.readAsArrayBuffer(fileInput.files[0]);
+        reader.readAsArrayBuffer(e.target.files[0]);
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            studentsData = XLSX.utils.sheet_to_json(sheet);
+            headers = XLSX.utils.sheet_to_json(sheet, {header: 1})[0];
 
-        reader.onload = async function(e) {
-            try {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {defval: ""});
-
-                output.innerHTML = "";
-                status.innerText = "جاري المعالجة...";
-
-                // استخدام دالة معالجة لتجنب الـ Overflow والتجمد
-                for (let i = 0; i < rows.length; i++) {
-                    let row = rows[i];
-                    let cleanRow = {};
-                    for (let key in row) { cleanRow[key.toString().trim()] = row[key]; }
-
-                    let name = cleanRow['اسم الطالب'] || cleanRow['الاسم'] || "طالب " + (i+1);
-                    const card = document.createElement('div');
-                    card.className = 'label-card';
-                    
-                    let qrTxt = `الاسم: ${name}\n`;
-                    let html = `<div><div class="st-name">${name}</div><div class="data-grid">`;
-                    
-                    opts.forEach(f => {
-                        if (cleanRow[f]) {
-                            html += `<div class="data-item"><b>${f}:</b> ${cleanRow[f]}</div>`;
-                            qrTxt += `${f}: ${cleanRow[f]}\n`;
-                        }
-                    });
-
-                    html += `</div></div><div class="qr-wrapper"><div id="qr-${i}"></div></div>`;
-                    card.innerHTML = html;
-                    output.appendChild(card);
-
-                    // توليد QR واحد تلو الآخر لتجنب Overflow
-                    new QRCode(document.getElementById(`qr-${i}`), {
-                        text: qrTxt.trim(),
-                        width: 80, height: 80,
-                        correctLevel: QRCode.CorrectLevel.M
-                    });
-
-                    // تحديث الحالة كل 10 طلاب لراحة المعالج
-                    if (i % 10 === 0) {
-                        status.innerText = `تم معالجة ${i} من ${rows.length}`;
-                        await new Promise(r => setTimeout(r, 10)); 
-                    }
-                }
-
-                status.innerText = "تم الانتهاء بنجاح!";
-                document.getElementById('print-btn').style.display = 'block';
-            } catch (err) {
-                alert("حدث خطأ: تأكد من ملف الإكسيل.");
-            }
+            const selector = document.getElementById('col-selector');
+            selector.innerHTML = "";
+            headers.forEach(h => {
+                selector.innerHTML += `<div class="form-check"><input type="checkbox" class="col-check form-check-input" value="${h}" checked> <label class="form-check-label small">${h}</label></div>`;
+            });
+            document.getElementById('settings-area').style.display = 'block';
         };
+    };
+
+    async function generate(mode) {
+        const output = document.getElementById('output');
+        const selectedCols = Array.from(document.querySelectorAll('.col-check:checked')).map(c => c.value);
+        output.innerHTML = "<div class='text-center p-5'>جاري معالجة البيانات...</div>";
+
+        let html = "";
+        studentsData.forEach((student, i) => {
+            let details = "";
+            let qrText = "";
+
+            selectedCols.forEach(col => {
+                if (student[col]) {
+                    details += `<div class="data-item"><b>${col}:</b> <span>${student[col]}</span></div>`;
+                    qrText += `${col}: ${student[col]}\n`;
+                }
+            });
+
+            if (mode === 'cards') {
+                html += `
+                <div class="label-card">
+                    <div class="st-name">${student[headers[0]] || 'طالب'}</div>
+                    <div class="data-rows">${details}</div>
+                    <div class="qr-wrapper"><div id="qr-${i}"></div></div>
+                </div>`;
+            } else {
+                html += `
+                <div class="label-card" style="justify-content:center; align-items:center;">
+                    <div class="qr-wrapper"><div id="qr-${i}"></div></div>
+                    <div class="fw-bold mt-2" style="font-size:12px;">${student[headers[0]]}</div>
+                </div>`;
+            }
+        });
+
+        output.innerHTML = html;
+        document.getElementById('print-btn').style.display = 'block';
+
+        // رسم الكيو آر بشكل تسلسلي لضمان الظهور
+        for (let i = 0; i < studentsData.length; i++) {
+            let content = "";
+            selectedCols.forEach(col => { if(studentsData[i][col]) content += `${col}: ${studentsData[i][col]}\n`; });
+            
+            const el = document.getElementById(`qr-${i}`);
+            if (el) {
+                new QRCode(el, {
+                    text: encodeAr(content.trim()),
+                    width: 100, height: 100,
+                    correctLevel: QRCode.CorrectLevel.L
+                });
+            }
+            // استراحة بسيطة جداً لضمان عدم تجمد المتصفح
+            if (i % 10 === 0) await new Promise(r => setTimeout(r, 10));
+        }
     }
 </script>
 </body>
