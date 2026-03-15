@@ -3,191 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة الأكواد الذكي | Smart QR & Barcode</title>
+    <title>نظام محمود عادل - النسخة الشاملة</title>
     
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-
     <style>
-        :root { --primary-color: #2c3e50; --accent-color: #3498db; }
-        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .main-card { border: none; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-top: 2rem; }
-        .nav-pills .nav-link.active { background-color: var(--primary-color); }
-        .nav-link { color: var(--primary-color); font-weight: 600; }
-        #reader { border: 2px dashed #ccc; border-radius: 10px; overflow: hidden; }
-        .result-box { background: #fff; border-right: 5px solid var(--accent-color); padding: 15px; margin-top: 15px; border-radius: 5px; }
-        #qrcode-output img, #barcode-output { max-width: 100%; height: auto; margin: 20px auto; display: block; }
-        .btn-download { display: none; margin-top: 10px; }
+        body { background-color: #f0f2f5; font-family: sans-serif; padding: 10px; margin: 0; }
+        .no-print { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .btn-main { background: #28a745; color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; font-size: 18px; margin-top: 15px; }
+        #output { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+        .label-card { background: white; border: 1px solid #000; padding: 8px; height: 52mm; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; page-break-inside: avoid; border-radius: 5px; }
+        .st-name { color: #d32f2f; font-weight: bold; font-size: 14px; text-align: center; border-bottom: 1px solid #3498db; padding-bottom: 3px; margin-bottom: 5px; }
+        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; font-size: 10px; }
+        .data-item { background: #f8f9fa; padding: 2px 4px; border-right: 3px solid #3498db; }
+        .qr-wrapper { display: flex; justify-content: center; align-items: center; }
+        .qr-wrapper canvas, .qr-wrapper img { width: 85px !important; height: 85px !important; }
+        @media print { .no-print { display: none !important; } #output { gap: 2px; } }
     </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
-<div class="container pb-5">
-    <div class="text-center my-4">
-        <h1 class="display-5 fw-bold text-dark">نظام إدارة الأكواد <span class="text-primary">الذكي</span></h1>
-        <p class="text-muted">إنشاء وقراءة الباركود والـ QR Code بسرعة واحترافية</p>
-    </div>
-
-    <div class="card main-card">
-        <div class="card-header bg-white border-0">
-            <ul class="nav nav-pills nav-justified mt-3" id="pills-tab" role="tablist">
-                <li class="nav-item">
-                    <button class="nav-link active" id="pills-generate-tab" data-bs-toggle="pill" data-bs-target="#pills-generate">إنشاء كود جديد</button>
-                </li>
-                <li class="nav-item">
-                    <button class="nav-link" id="pills-scan-tab" data-bs-toggle="pill" data-bs-target="#pills-scan">ماسح ضوئي (Scan)</button>
-                </li>
-            </ul>
-        </div>
+<div class="container no-print">
+    <div class="no-print">
+        <h3 style="text-align:center; color:#007bff;">نظام الطلاب الذكي 🎓</h3>
+        <p style="font-size:12px; text-align:center; color:red;">هذه النسخة تعمل على الموبايل مباشرة</p>
         
-        <div class="card-body p-4">
-            <div class="tab-content" id="pills-tabContent">
-                
-                <div class="tab-pane fade show active" id="pills-generate">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">نوع الكود:</label>
-                            <select id="code-type" class="form-select mb-3">
-                                <option value="qr">QR Code (روابط/نصوص)</option>
-                                <option value="barcode">Barcode (أرقام/منتجات)</option>
-                            </select>
-                            
-                            <label class="form-label fw-bold">المحتوى:</label>
-                            <textarea id="input-text" class="form-control" rows="3" placeholder="أدخل الرابط أو النص هنا..."></textarea>
-                            
-                            <div class="row mt-3">
-                                <div class="col">
-                                    <label class="form-label small">لون الكود:</label>
-                                    <input type="color" id="color-dark" class="form-control form-control-color w-100" value="#000000">
-                                </div>
-                                <div class="col">
-                                    <label class="form-label small">لون الخلفية:</label>
-                                    <input type="color" id="color-light" class="form-control form-control-color w-100" value="#ffffff">
-                                </div>
-                            </div>
+        <label><b>1. اختر ملف الإكسيل:</b></label>
+        <input type="file" id="excel-file" style="display:block; width:100%; margin:10px 0;" accept=".xlsx, .xls">
 
-                            <button onclick="generate()" class="btn btn-primary w-100 mt-4 py-2 fw-bold">توليد الكود الآن</button>
-                        </div>
-                        
-                        <div class="col-md-6 text-center border-start">
-                            <div id="qrcode-output"></div>
-                            <svg id="barcode-output" style="display:none;"></svg>
-                            <button id="download-btn" onclick="downloadImage()" class="btn btn-outline-success btn-download">
-                                تحميل الصورة بجودة عالية <i class="bi bi-download"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="tab-pane fade" id="pills-scan">
-                    <div class="row justify-content-center">
-                        <div class="col-md-8">
-                            <div id="reader"></div>
-                            <div class="result-box shadow-sm">
-                                <h6 class="text-muted mb-2">النتيجة:</h6>
-                                <div id="scan-result" class="fw-bold text-break text-primary">بانتظار مسح الكود...</div>
-                                <button id="copy-btn" class="btn btn-sm btn-light mt-2" style="display:none;" onclick="copyResult()">نسخ النص</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
+        <button onclick="processData()" class="btn-main">توليد البطاقات ✨</button>
+        <button onclick="window.print()" id="print-btn" class="btn-main" style="background:#333; display:none;">طباعة / حفظ PDF</button>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<div id="output"></div>
 
 <script>
-    // --- متغيرات عامة ---
-    let currentQR = null;
-
-    // --- وظيفة الإنشاء ---
-    function generate() {
-        const type = document.getElementById('code-type').value;
-        const text = document.getElementById('input-text').value;
-        const dark = document.getElementById('color-dark').value;
-        const light = document.getElementById('color-light').value;
-        const qrContainer = document.getElementById('qrcode-output');
-        const barContainer = document.getElementById('barcode-output');
-        const downloadBtn = document.getElementById('download-btn');
-
-        if (!text) return alert("يرجى إدخال محتوى أولاً");
-
-        qrContainer.innerHTML = ""; // مسح القديم
-        barContainer.style.display = "none";
-        downloadBtn.style.display = "block";
-
-        if (type === 'qr') {
-            qrContainer.style.display = "block";
-            currentQR = new QRCode(qrContainer, {
-                text: text,
-                width: 250,
-                height: 250,
-                colorDark: dark,
-                colorLight: light,
-                correctLevel: QRCode.CorrectLevel.H
-            });
-        } else {
-            qrContainer.style.display = "none";
-            barContainer.style.display = "block";
-            JsBarcode("#barcode-output", text, {
-                format: "CODE128",
-                lineColor: dark,
-                background: light,
-                width: 2,
-                height: 100,
-                displayValue: true
-            });
-        }
-    }
-
-    // --- وظيفة تحميل الكود كصورة ---
-    function downloadImage() {
-        const type = document.getElementById('code-type').value;
-        let imgSource;
+    // وظيفة القراءة والتوليد
+    function processData() {
+        const fileInput = document.getElementById('excel-file');
+        const output = document.getElementById('output');
         
-        if(type === 'qr') {
-            imgSource = document.querySelector('#qrcode-output img').src;
-        } else {
-            const svg = document.getElementById('barcode-output');
-            const xml = new XMLSerializer().serializeToString(svg);
-            const svg64 = btoa(xml);
-            imgSource = 'data:image/svg+xml;base64,' + svg64;
-        }
+        if (!fileInput.files[0]) return alert("يا مستر محمود، اختر الملف أولاً");
 
-        const link = document.createElement('a');
-        link.href = imgSource;
-        link.download = 'code-' + Date.now() + '.png';
-        link.click();
-    }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(sheet, {defval: ""});
 
-    // --- وظيفة الماسح الضوئي ---
-    function onScanSuccess(decodedText) {
-        document.getElementById('scan-result').innerText = decodedText;
-        document.getElementById('copy-btn').style.display = 'inline-block';
-        // تنبيه صوتي بسيط عند النجاح (اختياري)
-        const audio = new Audio('https://www.soundjay.com/buttons/beep-07a.mp3');
-        audio.play();
-    }
+                output.innerHTML = ""; 
 
-    let html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
-        fps: 15, 
-        qrbox: {width: 250, height: 250},
-        aspectRatio: 1.0 
-    });
-    
-    html5QrcodeScanner.render(onScanSuccess);
+                rows.forEach((row, i) => {
+                    let cleanRow = {};
+                    for (let key in row) { cleanRow[key.toString().trim()] = row[key].toString().trim(); }
 
-    function copyResult() {
-        const text = document.getElementById('scan-result').innerText;
-        navigator.clipboard.writeText(text);
-        alert("تم نسخ النص بنجاح!");
+                    let name = cleanRow['اسم الطالب'] || cleanRow['الاسم'] || "طالب بدون اسم";
+                    const card = document.createElement('div');
+                    card.className = 'label-card';
+                    
+                    let qrTxt = `الاسم: ${name}\n`;
+                    let fields = ["مسلسل", "كود الطالب", "الرقم القومي", "الصف", "النوع", "الجلوس", "السري"];
+                    
+                    let html = `<div><div class="st-name">${name}</div><div class="data-grid">`;
+                    fields.forEach(f => {
+                        if (cleanRow[f]) {
+                            html += `<div class="data-item"><b>${f}:</b> ${cleanRow[f]}</div>`;
+                            qrTxt += `${f}: ${cleanRow[f]}\n`;
+                        }
+                    });
+                    html += `</div></div><div class="qr-wrapper" id="qr-${i}"></div>`;
+                    
+                    card.innerHTML = html;
+                    output.appendChild(card);
+
+                    // توليد QR
+                    new QRCode(document.getElementById(`qr-${i}`), {
+                        text: qrTxt.trim(),
+                        width: 90, height: 90,
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                });
+                document.getElementById('print-btn').style.display = 'block';
+            } catch (err) {
+                alert("خطأ في قراءة البيانات، تأكد من ملف الإكسيل.");
+            }
+        };
+        reader.readAsArrayBuffer(fileInput.files[0]);
     }
 </script>
-
 </body>
 </html>
