@@ -7,121 +7,115 @@
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
         :root {
             --primary-color: #4361ee;
             --secondary-color: #3f37c9;
-            --success-color: #4cc9f0;
             --bg-color: #f8f9fa;
         }
 
         body { 
             background-color: var(--bg-color); 
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
             color: #2b2d42;
         }
 
-        /* واجهة الموبايل الشيك */
+        /* التصميم العصري للموبايل */
         .app-header {
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
-            padding: 25px 15px;
-            border-bottom-left-radius: 30px;
-            border-bottom-right-radius: 30px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 30px 15px;
+            border-bottom-left-radius: 40px;
+            border-bottom-right-radius: 40px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
             text-align: center;
-            margin-bottom: 20px;
         }
 
         .main-card {
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            padding: 20px;
-            margin: -40px 15px 20px 15px;
+            border-radius: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            padding: 25px;
+            margin: -30px 15px 20px 15px;
             border: none;
         }
 
         .upload-area {
-            border: 2px dashed #dee2e6;
-            border-radius: 15px;
-            padding: 20px;
+            border: 2px dashed #cbd5e0;
+            border-radius: 20px;
+            padding: 30px;
             text-align: center;
-            transition: 0.3s;
-            background: #fdfdfd;
+            background: #fafbfc;
+            cursor: pointer;
         }
-
-        .upload-area:active { border-color: var(--primary-color); background: #f0f3ff; }
 
         .btn-action {
-            border-radius: 12px;
-            padding: 12px;
-            font-weight: 600;
-            transition: 0.3s;
+            border-radius: 15px;
+            padding: 14px;
+            font-weight: 700;
             border: none;
             width: 100%;
-            margin-top: 10px;
+            transition: transform 0.2s;
         }
+        .btn-action:active { transform: scale(0.95); }
 
         .btn-cards { background: var(--primary-color); color: white; }
         .btn-qr { background: #7209b7; color: white; }
-        .btn-print { background: #2b2d42; color: white; }
+        .btn-print { background: #2b2d42; color: white; margin-top: 20px; }
 
-        /* تنسيق البطاقات (الطباعة) */
+        /* تنسيق الطباعة A4 */
         #output { 
             display: grid; 
             grid-template-columns: 1fr 1fr; 
-            gap: 10px; 
+            gap: 12px; 
             padding: 10px;
         }
 
         .card-item {
             background: white;
-            border: 1px solid #000;
+            border: 1.2px solid #000;
             height: 53mm;
-            padding: 8px;
+            padding: 10px;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            align-items: center;
             page-break-inside: avoid;
-            border-radius: 5px;
+            border-radius: 6px;
         }
 
         .st-name-title {
-            font-size: 14px;
+            font-size: 15px;
             font-weight: bold;
             color: #d00000;
             border-bottom: 2px solid var(--primary-color);
-            width: 100%;
             text-align: center;
-            margin-bottom: 4px;
+            padding-bottom: 3px;
         }
 
         .data-rows {
             font-size: 11px;
-            width: 100%;
-            text-align: right;
-            line-height: 1.2;
-            overflow: hidden;
+            line-height: 1.4;
+            flex-grow: 1;
+            margin-top: 5px;
         }
 
-        .qr-canvas { width: 95px !important; height: 95px !important; }
-
-        .check-group {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin: 15px 0;
+        .qr-wrapper { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+        }
+        /* ضبط حجم الكيو آر ليظهر بوضوح */
+        .qr-wrapper img, .qr-wrapper canvas { 
+            width: 90px !important; 
+            height: 90px !important; 
         }
 
         @media print {
             .no-print { display: none !important; }
             body { background: white; padding: 0; }
-            #output { gap: 5px; padding: 0; }
         }
     </style>
 </head>
@@ -129,21 +123,22 @@
 
 <div class="no-print">
     <div class="app-header">
-        <h2 class="mb-1">نظام محمود عادل</h2>
-        <p class="small opacity-75">إدارة البطاقات والأكواد باحترافية</p>
+        <h2 class="fw-bold">نظام محمود عادل</h2>
+        <p class="small opacity-75">إصدار الكنترول الذكي (يدعم العربية)</p>
     </div>
 
     <div class="main-card">
         <div class="upload-area" onclick="document.getElementById('fileInput').click()">
-            <p class="mb-2">📁 اضغط لرفع ملف الإكسيل</p>
-            <input type="file" id="fileInput" accept=".xlsx" style="display:none">
-            <div id="fileName" class="small text-muted">لم يتم اختيار ملف</div>
+            <h4 class="mb-2">📄</h4>
+            <p class="mb-0 fw-bold">اختر ملف الإكسيل</p>
+            <input type="file" id="fileInput" accept=".xlsx, .xls" style="display:none">
+            <div id="fileName" class="text-muted small mt-2">لا يوجد ملف مختار</div>
         </div>
 
         <div id="config-area" style="display:none;">
-            <hr>
-            <label class="fw-bold mb-2 small text-secondary">اختر البيانات التي تريد تضمينها:</label>
-            <div id="colsList" class="check-group"></div>
+            <hr class="my-4">
+            <p class="small text-secondary fw-bold mb-3">حدد الأعمدة التي تريدها في البطاقة/الكود:</p>
+            <div id="colsList" class="row row-cols-2 g-2 mb-4"></div>
             
             <div class="row g-2">
                 <div class="col-6">
@@ -159,13 +154,19 @@
 
 <div id="output"></div>
 
-<div class="no-print p-3 text-center">
-    <button id="printBtn" onclick="window.print()" class="btn-action btn-print" style="display:none; width: 90%;">📄 حفظ كـ PDF / طباعة</button>
+<div class="no-print p-4 text-center">
+    <button id="printBtn" onclick="window.print()" class="btn-action btn-print" style="display:none; width: 90%;">📄 طباعة النسخة الحالية (PDF)</button>
 </div>
 
 <script>
     let excelRows = [];
     let headers = [];
+
+    // دالة سحرية لتمكين الـ QR من فهم الحروف العربية
+    function utf8_encode(argString) {
+        if (argString === null || typeof argString === 'undefined') return "";
+        return unescape(encodeURIComponent(argString));
+    }
 
     document.getElementById('fileInput').onchange = function(e) {
         const file = e.target.files[0];
@@ -184,9 +185,11 @@
             colsList.innerHTML = "";
             headers.forEach(h => {
                 colsList.innerHTML += `
-                    <div class="form-check">
-                        <input type="checkbox" class="col-chk form-check-input" value="${h}" checked id="chk-${h}">
-                        <label class="form-check-label small" for="chk-${h}">${h}</label>
+                    <div class="col">
+                        <div class="form-check small">
+                            <input type="checkbox" class="col-chk form-check-input" value="${h}" checked id="chk-${h}">
+                            <label class="form-check-label" for="chk-${h}">${h}</label>
+                        </div>
                     </div>`;
             });
             document.getElementById('config-area').style.display = 'block';
@@ -196,47 +199,57 @@
     function process(mode) {
         const out = document.getElementById('output');
         const selectedCols = Array.from(document.querySelectorAll('.col-chk:checked')).map(c => c.value);
-        out.innerHTML = "";
+        out.innerHTML = "<p class='text-center p-5'>جاري التوليد...</p>";
 
+        let mainHtml = "";
         excelRows.forEach((row, i) => {
-            let infoText = "";
-            let htmlData = "";
+            let qrTxt = "";
+            let htmlDetails = "";
             selectedCols.forEach(f => {
                 if(row[f]) {
-                    infoText += `${f}: ${row[f]}\n`;
-                    htmlData += `<div style="border-bottom:1px solid #eee; padding:1px 0;"><b>${f}:</b> ${row[f]}</div>`;
+                    qrTxt += `${f}: ${row[f]}\n`;
+                    htmlDetails += `<div class="d-flex justify-content-between border-bottom py-1"><b>${f}:</b> <span>${row[f]}</span></div>`;
                 }
             });
 
-            const card = document.createElement('div');
-            card.className = 'card-item';
-            
             if(mode === 'cards') {
-                card.innerHTML = `
-                    <div class="st-name-title">${row[headers[0]]}</div>
-                    <div class="data-rows">${htmlData}</div>
-                    <div class="small text-muted" style="font-size:9px;">نظام محمود عادل</div>
-                `;
+                mainHtml += `
+                <div class="card-item">
+                    <div class="st-name-title">${row[headers[0]] || 'طالب'}</div>
+                    <div class="data-rows">${htmlDetails}</div>
+                    <div style="font-size:9px; color:#aaa; text-align:center;">نظام محمود عادل الذكي</div>
+                </div>`;
             } else {
-                card.innerHTML = `
-                    <canvas id="qr-${i}" class="qr-canvas"></canvas>
-                    <div class="fw-bold small text-center">${row[headers[0]]}</div>
-                `;
-                
-                // رسم الكود بتأخير بسيط لضمان وجود الـ Canvas
-                setTimeout(() => {
-                    new QRious({
-                        element: document.getElementById(`qr-${i}`),
-                        value: infoText,
-                        size: 200,
-                        level: 'L'
-                    });
-                }, 50);
+                mainHtml += `
+                <div class="card-item" style="align-items:center; justify-content:center;">
+                    <div class="qr-wrapper" id="qr-box-${i}"></div>
+                    <div class="fw-bold mt-2" style="font-size:13px;">${row[headers[0]]}</div>
+                </div>`;
             }
-            out.appendChild(card);
         });
+
+        out.innerHTML = mainHtml;
         document.getElementById('printBtn').style.display = 'inline-block';
-        window.scrollTo(0, document.body.scrollHeight);
+
+        // رسم الـ QR فوراً مع دعم العربية
+        if(mode === 'qrs') {
+            setTimeout(() => {
+                excelRows.forEach((row, i) => {
+                    let textToCode = "";
+                    selectedCols.forEach(f => { if(row[f]) textToCode += `${f}: ${row[f]}\n`; });
+                    
+                    const container = document.getElementById(`qr-box-${i}`);
+                    if(container) {
+                        new QRCode(container, {
+                            text: utf8_encode(textToCode.trim()),
+                            width: 100,
+                            height: 100,
+                            correctLevel: QRCode.CorrectLevel.L
+                        });
+                    }
+                });
+            }, 100);
+        }
     }
 </script>
 </body>
